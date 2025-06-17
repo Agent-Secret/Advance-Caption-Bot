@@ -1,9 +1,11 @@
+import os
+import sys
+import re
 from pyrogram import *
 from info import *
 import asyncio
 from Script import script
 from .database import *
-import re
 from pyrogram.errors import FloodWait
 from pyrogram.types import *
 
@@ -157,6 +159,49 @@ def extract_year(default_caption):
             return str(y)
     return ""
 
+def clean_filename(file_name, enable_debug=False, enable_metadata=False):
+    allowed_extensions = ('mkv', 'mp4', 'avi', 'mov', 'flv', 'webm')
+    extension = ''
+    original_name = file_name
+    ext_match = re.search(r'\.({})$'.format('|'.join(allowed_extensions)), file_name, re.IGNORECASE)
+    if ext_match:
+        extension = f".{ext_match.group(1).lower()}"
+        file_name = file_name[:ext_match.start()]
+        
+    file_name = re.sub(r'@\w+', '', file_name)
+    spam_patterns = [
+        r'https?://\S+',         # URLs
+        r't\.me/\S+',            # Telegram links
+        r'\b(join|subscribe|visit|channel|movieverse|by|admin)\b',  # Common spam
+        r'[^\w\s\.-]',   # Emojis or special chars
+    ]
+    for pattern in spam_patterns:
+        file_name = re.sub(pattern, '', file_name, flags=re.IGNORECASE)
+        
+    file_name = re.sub(r'[_.]+', ' ', file_name)
+    file_name = re.sub(r'[<>:"/\\|?*]', '', file_name)
+    file_name = re.sub(r'\s+', ' ', file_name).strip()
+    tags = re.findall(r'(.*?)', file_name)
+    file_name = re.sub(r'\s*.*?', '', file_name).strip()
+    if tags:
+        file_name += ' ' + ' '.join(f'[{tag}]' for tag in tags)
+        
+    file_name = file_name.title()
+    file_name = f"{file_name}{extension}"
+    if enable_debug:
+        print("Original:", original_name)
+        print("Cleaned: ", file_name)
+        print("Extension:", extension)
+
+    return file_name
+
+def extract_title(file_name):
+    title = re.sub(r'[].*?[]', '', file_name)  # Remove tags
+    title = re.sub(r'\b(19\d{2}|20\d{2})\b', '', title)  # Remove year
+    title = re.sub(r'\b(720p|1080p|2160p|HDRip|BluRay|x264|HEVC|WEBRip|HD)\b', '', title, flags=re.IGNORECASE)
+    title = re.sub(r'\s+', ' ', title).strip()
+    return title
+    
 @Client.on_message(filters.channel)
 async def reCap(bot, message):
     chnl_id = message.chat.id
