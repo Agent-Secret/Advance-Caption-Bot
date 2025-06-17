@@ -112,7 +112,6 @@ async def delCap(_, msg):
     #return ", ".join(sorted(languages, key=str.lower))
 
 def extract_language(default_caption):
-    # Map short codes and full names → full standardized name
     language_map = {
         'hindi': 'Hindi',
         'hin': 'Hindi',
@@ -146,9 +145,17 @@ def extract_language(default_caption):
     } 
     return ", ".join(sorted(found_languages)) if found_languages else ""
     
+#def extract_year(default_caption):
+    #match = re.search(r'\b(19\d{2}|20\d{2})\b', default_caption)
+    #return match.group(1) if match else None
+    
 def extract_year(default_caption):
-    match = re.search(r'\b(19\d{2}|20\d{2})\b', default_caption)
-    return match.group(1) if match else None
+    possible_years = re.findall(r'\b(19\d{2}|20\d{2})\b', default_caption)
+    for year in possible_years:
+        y = int(year)
+        if 1900 <= y <= 2099:
+            return str(y)
+    return ""
 
 @Client.on_message(filters.channel)
 async def reCap(bot, message):
