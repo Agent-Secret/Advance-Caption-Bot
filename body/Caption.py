@@ -104,13 +104,48 @@ async def delCap(_, msg):
         await e_val.delete()
         return
 
-def extract_language(default_caption):
-    language_pattern = r'\b(Hindi|English|Tamil|Telugu|Malayalam|Kannada|Hin)\b'#Contribute More Language If You Have
-    languages = set(re.findall(language_pattern, default_caption, re.IGNORECASE))
-    if not languages:
-        return "Hindi-English"
-    return ", ".join(sorted(languages, key=str.lower))
+#def extract_language(default_caption):
+    #language_pattern = r'\b(Hindi|English|Tamil|Telugu|Malayalam|Kannada|Hin)\b'#Contribute More Language If You Have
+    #languages = set(re.findall(language_pattern, default_caption, re.IGNORECASE))
+    #if not languages:
+        #return "Hindi-English"
+    #return ", ".join(sorted(languages, key=str.lower))
 
+def extract_language(default_caption):
+    # Map short codes and full names → full standardized name
+    language_map = {
+        'hindi': 'Hindi',
+        'hin': 'Hindi',
+        'english': 'English',
+        'eng': 'English',
+        'tamil': 'Tamil',
+        'tam': 'Tamil',
+        'telugu': 'Telugu',
+        'tel': 'Telugu',
+        'malayalam': 'Malayalam',
+        'mal': 'Malayalam',
+        'kannada': 'Kannada',
+        'bengali': 'Bengali',
+        'marathi': 'Marathi',
+        'gujarati': 'Gujarati',
+        'punjabi': 'Punjabi',
+        'bhojpuri': 'Bhojpuri',
+        'urdu': 'Urdu',
+        'oriya': 'Oriya',
+        'assamese': 'Assamese',
+        'konkani': 'Konkani',
+        'kashmiri': 'Kashmiri',
+        'sindhi': 'Sindhi',
+        'tulu': 'Tulu'
+    }
+    pattern = r'\b(' + '|'.join(re.escape(lang) for lang in language_map.keys()) + r')\b'
+    matches = re.findall(pattern, default_caption, re.IGNORECASE)
+    found_languages = {
+        language_map.get(match.lower(), '').strip().title()
+        for match in matches if match.lower() in language_map
+    } 
+    return ", ".join(sorted(found_languages)) if found_languages else ""
+    
 def extract_year(default_caption):
     match = re.search(r'\b(19\d{2}|20\d{2})\b', default_caption)
     return match.group(1) if match else None
